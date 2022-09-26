@@ -1,6 +1,0 @@
-make --dry-run --always-make --keep-going --print-directory
-make: Entering directory '/home/fogbed/Documents/fogbed'
-python3 setup.py install
-make clean
-make: Leaving directory '/home/fogbed/Documents/fogbed'
- 
