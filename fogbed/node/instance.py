@@ -1,7 +1,7 @@
 from itertools import chain
 from typing import Dict, Optional
 from fogbed.exceptions import ContainerAlreadyExists, NotEnoughResourcesAvailable, ResourceModelNotFound
-from fogbed.fails import FailModel
+from fogbed.fails.models import InstanceFailModel
 
 from fogbed.node.container import Container
 from fogbed.resources import ResourceModel
@@ -20,21 +20,21 @@ class VirtualInstance(object):
         self.switch   = self.create_switch()
         self.containers: Dict[str, Container] = {}
         self.resource_model: Optional[ResourceModel] = None
+        self.fail_model: Optional[InstanceFailModel] = None
         
     
     def assignResourceModel(self, resource_model: ResourceModel):
         self.resource_model = resource_model
-    
 
-    def assignFailModel(self, fail_model: FailModel):
+
+    def assignFailModel(self, fail_model: InstanceFailModel):
         self.fail_model = fail_model
-        self.fail_model.assignVirtualInstance(self.label)
 
 
     def addDocker(self, name: str, **params):
         if(name in self.topology.hosts()):
             raise ContainerAlreadyExists(f'Container {name} already exists.')
-        
+            
         container = Container(name, **params)
         try:
             self.create_container(container)

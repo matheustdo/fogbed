@@ -1,16 +1,14 @@
-
+from enum import Enum, auto
 from abc import ABC, abstractmethod
 
+class DivisionMethod(Enum):
+    UP = auto()
+    DOWN = auto()
+    RANDOM = auto()
+
+class FailMode(Enum):
+    ALPHA = auto()
 
 class FailModel(ABC):
-    @abstractmethod
-    def assignVirtualInstance(self, vi_name):
-        pass
-
-    @abstractmethod
-    def run(self):
-        pass
-
-    @abstractmethod
-    def stop(self):
+    def __init__(self):
         pass

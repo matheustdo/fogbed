@@ -1,5 +1,7 @@
 from typing import Any, Dict
 
+from fogbed.fails.models import NodeFailModel
+
 
 class Container:
     def __init__(self, name: str, **params) -> None:
@@ -42,6 +44,11 @@ class Container:
         resources = self.resources
         return 0 if(resources is None) else resources['mu']
     
+    @property
+    def fail_model(self) -> 'NodeFailModel | None':
+        fail_model = self.params.get('fail_model')
+        return fail_model
+        
     @staticmethod
     def from_dict(params: Dict[str, Any]):
         required_params = ['name', 'dimage', 'cpu_period', 'cpu_quota', 'mem_limit']
