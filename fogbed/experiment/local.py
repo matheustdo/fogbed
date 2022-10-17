@@ -4,7 +4,7 @@ from typing import List, Optional, Type
 from fogbed.emulation import EmulationCore
 from fogbed.exceptions import ContainerAlreadyExists, ContainerNotFound, NotEnoughResourcesAvailable, VirtualInstanceAlreadyExists
 from fogbed.experiment import Experiment
-from fogbed.fails.models import InstanceFailModel
+from fogbed.fails import FailModel
 from fogbed.net import Fogbed
 from fogbed.node.container import Container
 from fogbed.node.instance import VirtualInstance
@@ -26,7 +26,7 @@ class FogbedExperiment(Experiment):
         self.topology.addLink(node1.switch, node2.switch, **params)
 
 
-    def add_virtual_instance(self, name: str, resource_model: ResourceModel, fail_model: Optional[InstanceFailModel] = None ) -> VirtualInstance:
+    def add_virtual_instance(self, name: str, resource_model: ResourceModel, fail_model: Optional[FailModel] = None ) -> VirtualInstance:
         if(name in EmulationCore.virtual_instances()):
             raise VirtualInstanceAlreadyExists(f'Datacenter {name} already exists.')
         

@@ -2,7 +2,7 @@ from itertools import chain
 from typing import Dict, Optional
 
 from fogbed.exceptions import ContainerNotFound, ResourceModelNotFound
-from fogbed.fails.models import InstanceFailModel
+from fogbed.fails import FailModel
 from fogbed.node.container import Container
 from fogbed.resources import ResourceModel
 
@@ -18,14 +18,14 @@ class VirtualInstance(object):
         self.switch   = self._create_switch()
         self.containers: Dict[str, Container] = {}
         self.resource_model: Optional[ResourceModel] = None
-        self.fail_model: Optional[InstanceFailModel] = None
+        self.fail_model: Optional[FailModel] = None
         
     
     def assignResourceModel(self, resource_model: ResourceModel):
         self.resource_model = resource_model
 
 
-    def assignFailModel(self, fail_model: InstanceFailModel):
+    def assignFailModel(self, fail_model: FailModel):
         self.fail_model = fail_model    
     
 

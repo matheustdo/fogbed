@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional
+from fogbed.fails import FailModel
 
-from fogbed.fails.models import NodeFailModel
 from mininet.node import Docker
 
 class Container:
@@ -70,7 +70,7 @@ class Container:
         return 0 if(resources is None) else resources['mu']
     
     @property
-    def fail_model(self) -> 'NodeFailModel | None':
+    def fail_model(self) -> 'FailModel | None':
         fail_model = self.params.get('fail_model')
         return fail_model
 

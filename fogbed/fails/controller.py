@@ -1,97 +1,54 @@
-import random
 from threading import Timer
-from fogbed.experiment.local import FogbedExperiment
-from fogbed.emulation import EmulationCore
-from fogbed.fails import FailMode, SelectionMethod
-from fogbed.fails.utils import calculate_division
+from typing import List
+from fogbed.experiment import Experiment
+from fogbed.fails import FailMode
+from fogbed.fails.utils import calculate_division, stop_node_on_time, stop_nodes_on_time
 from fogbed.node.container import Container
 from fogbed.node.instance import VirtualInstance
-from fogbed.resources import ResourceModel
 
 
 class FailController:
-    def __init__(self, experiment: FogbedExperiment):
+    def __init__(self, experiment: Experiment):
         self.experiment = experiment
+        self.thread_list: List[Timer] = []
 
 
-    def stopNodeOnTime(self, node: Container):
-        life_time = node.fail_model.life_time
-
-        def action():
-            self.experiment.remove_docker(node.name)
-
-            def action2():
-                vis = EmulationCore.virtual_instances()
-                print(vis['cloud'])
-                vis['cloud'].addDocker('d8', resources=ResourceModel.SMALL)
-        
-            timer2 = Timer(5, action2, [])
-            timer2.start()
-        
-        timer = Timer(life_time, action, [])
-        timer.start()
-    
-
-    def stopNodesOnTime(self, vi: VirtualInstance):
-        vi_fail_model = vi.fail_model
-        life_time = vi_fail_model.life_time
-
-        def action():
-            fail_rate = vi_fail_model.fail_rate
-            division_method = vi_fail_model.division_method
-            selection_method = vi_fail_model.selection_method
-            all_nodes = list(vi.containers.keys())
-            vi_len = len(vi.containers)
-            stop_amount = calculate_division(vi_len, fail_rate, division_method)
-
-            if(selection_method == SelectionMethod.SEQUENTIAL):
-                for idx, node_name in enumerate(all_nodes):
-                    if (idx < stop_amount):
-                        self.experiment.remove_docker(node_name)
-                    else:
-                        break
-            else:
-                idx_to_remove = random.sample(range(0, vi_len), stop_amount)
-                next_idx = idx_to_remove.pop(0)
-
-                for idx, node_name in enumerate(all_nodes):
-                    if (idx == next_idx):
-                        self.experiment.remove_docker(node_name)
-
-                        if (len(idx_to_remove) == 0):
-                            break
-
-                        next_idx = idx_to_remove.pop(0)
-                        
-        
-        timer = Timer(life_time, action, [])
-        timer.start()
-
-
-    def viFailSwitch(self, vi: VirtualInstance):
-        mode = vi.fail_model.mode
+    def switch_virtual_instance_fail(self, virtual_instance: VirtualInstance):
+        fail_model = virtual_instance.fail_model
+        mode = fail_model.mode
 
         if mode == FailMode.CRASH:
-            self.stopNodesOnTime(vi)
+            thread = stop_nodes_on_time(self.experiment, virtual_instance, fail_model.fail_rate, fail_model.life_time, fail_model.division_method, fail_model.selection_method)
+            self.thread_list.append(thread)
+            thread.start()
 
-    def nodeFailSwitch(self, node: Container):
-        mode = node.fail_model.mode
+
+    def switch_node_fail(self, node: Container):
+        fail_model = node.fail_model
+        mode = fail_model.mode
         
         if mode == FailMode.CRASH:
-            self.stopNodeOnTime(node)
+            thread = stop_node_on_time(self.experiment, node, fail_model.life_time)
+            self.thread_list.append(thread)
+            thread.start()
+
 
     def start(self):
-        vis = EmulationCore.virtual_instances()
-        print(vis)
-        for key in vis:
-            vi = EmulationCore.virtual_instances()[key]
-            nodes = vi.containers
+        virtual_instances = self.experiment.get_virtual_instances()
+        
+        for virtual_instance in virtual_instances:
+            nodes = virtual_instance.containers
 
             for node_key in nodes:
                 node = nodes[node_key]
                 
                 if node.fail_model is not None:
-                    self.nodeFailSwitch(node)
+                    self.switch_node_fail(node)
             
-            if vi.fail_model is not None:
-                self.viFailSwitch(vi)
+            if virtual_instance.fail_model is not None:
+                self.switch_virtual_instance_fail(virtual_instance)
+
+    def stop(self):
+        for thread in self.thread_list:
+            if(thread.is_alive()):
+                thread.cancel()

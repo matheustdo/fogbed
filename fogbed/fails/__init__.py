@@ -1,5 +1,5 @@
+from abc import ABC
 from enum import Enum, auto
-from abc import ABC, abstractmethod
 
 class DivisionMethod(Enum):
     UP = auto()
@@ -14,5 +14,5 @@ class SelectionMethod(Enum):
     RANDOM = auto()
 
 class FailModel(ABC):
-    def __init__(self):
-        pass
+    def __init__(self, mode: FailMode):
+        self.mode = mode
