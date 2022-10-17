@@ -3,7 +3,7 @@ from threading import Timer
 from fogbed.experiment.local import FogbedExperiment
 from fogbed.emulation import EmulationCore
 from fogbed.fails import FailMode, SelectionMethod
-from fogbed.fails.utils import calculateDivision
+from fogbed.fails.utils import calculate_division
 from fogbed.node.container import Container
 from fogbed.node.instance import VirtualInstance
 from fogbed.resources import ResourceModel
@@ -18,7 +18,7 @@ class FailController:
         life_time = node.fail_model.life_time
 
         def action():
-            self.experiment.remove_node(node.name)
+            self.experiment.remove_docker(node.name)
 
             def action2():
                 vis = EmulationCore.virtual_instances()
@@ -42,12 +42,12 @@ class FailController:
             selection_method = vi_fail_model.selection_method
             all_nodes = list(vi.containers.keys())
             vi_len = len(vi.containers)
-            stop_amount = calculateDivision(vi_len, fail_rate, division_method)
+            stop_amount = calculate_division(vi_len, fail_rate, division_method)
 
             if(selection_method == SelectionMethod.SEQUENTIAL):
                 for idx, node_name in enumerate(all_nodes):
                     if (idx < stop_amount):
-                        self.experiment.remove_node(node_name)
+                        self.experiment.remove_docker(node_name)
                     else:
                         break
             else:
@@ -56,7 +56,7 @@ class FailController:
 
                 for idx, node_name in enumerate(all_nodes):
                     if (idx == next_idx):
-                        self.experiment.remove_node(node_name)
+                        self.experiment.remove_docker(node_name)
 
                         if (len(idx_to_remove) == 0):
                             break
@@ -82,7 +82,7 @@ class FailController:
 
     def start(self):
         vis = EmulationCore.virtual_instances()
-        
+        print(vis)
         for key in vis:
             vi = EmulationCore.virtual_instances()[key]
             nodes = vi.containers

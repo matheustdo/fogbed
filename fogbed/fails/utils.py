@@ -2,7 +2,7 @@ import math
 from random import Random
 from fogbed.fails import DivisionMethod
 
-def calculateDivision(value: float, factor: float, division_method: DivisionMethod):
+def calculate_division(value: float, factor: float, division_method: DivisionMethod):
     if division_method == DivisionMethod.RANDOM:
         return Random.randint(0, int)
     elif division_method == DivisionMethod.DOWN:
