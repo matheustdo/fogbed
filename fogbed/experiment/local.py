@@ -30,13 +30,14 @@ class FogbedExperiment(Experiment):
         if(name in EmulationCore.virtual_instances()):
             raise VirtualInstanceAlreadyExists(f'Datacenter {name} already exists.')
         
-        datacenter = VirtualInstance(name=name, topology=self.topology)
+        datacenter = VirtualInstance(name)
         datacenter.assignResourceModel(resource_model)
 
         if(fail_model is not None):
             datacenter.assignFailModel(fail_model)
 
         EmulationCore.add_virtual_instance(datacenter)
+        self.topology.addSwitch(datacenter.switch)
         return datacenter
     
 
