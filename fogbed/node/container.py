@@ -1,18 +1,43 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fogbed.fails.models import NodeFailModel
-
+from mininet.node import Docker
 
 class Container:
     def __init__(self, name: str, **params) -> None:
         self.name   = name
         self.params = params
+        self._docker: Optional[Docker] = None
     
+    def cmd(self, command: str) -> str:
+        if(self._docker is None):
+            raise Exception(f'Docker container {self.name} was not started')
+        return self._docker.cmd(command)
+
+    def start(self):
+        if(self._docker is None):
+            raise Exception(f'Docker container {self.name} was not started')
+        self._docker.start()
+
+    def stop(self):
+        if(self._docker is None):
+            raise Exception(f'Docker container {self.name} was not started')
+        self._docker.stop()
+
+    def set_docker(self, docker: Docker):
+        self._docker = docker
+
     def update_cpu(self, cpu_quota: int, cpu_period: int):
+        if(self._docker is not None):
+            self._docker.updateCpuLimit(cpu_quota, cpu_period)
+
         self.params['cpu_quota'] = cpu_quota
         self.params['cpu_period'] = cpu_period
 
     def update_memory(self, memory_limit: int):
+        if(self._docker is not None):
+            self._docker.updateMemoryLimit(memory_limit)
+
         self.params['mem_limit'] = memory_limit
 
     @property
@@ -48,18 +73,16 @@ class Container:
     def fail_model(self) -> 'NodeFailModel | None':
         fail_model = self.params.get('fail_model')
         return fail_model
-        
-    @staticmethod
-    def from_dict(params: Dict[str, Any]):
-        required_params = ['name', 'dimage', 'cpu_period', 'cpu_quota', 'mem_limit']
-        
-        for param in required_params:
-            if(params.get(param) is None):
-                raise Exception(f'Missing param container.{param}')
-        
-        return Container(**params) 
+
+    @property
+    def ip(self) -> str:
+        return self._docker.IP() if(self._docker is not None) else ''
 
     def __repr__(self) -> str:
         cpu_quota  = self.cpu_quota
         cpu_period = self.cpu_period
         return f'Container(name={self.name}, cpu_quota={cpu_quota}, cpu_period={cpu_period})'
+    
+    def __eq__(self, other: object) -> bool:
+        if(not isinstance(other, Container)): return False
+        return self.name == other.name

@@ -1,8 +1,7 @@
 from itertools import chain
 from typing import Dict, Optional
-from fogbed.exceptions import ContainerAlreadyExists, NotEnoughResourcesAvailable, ResourceModelNotFound
 from fogbed.fails.models import InstanceFailModel
-
+from fogbed.exceptions import ContainerAlreadyExists, ContainerNotFound, NotEnoughResourcesAvailable, ResourceModelNotFound
 from fogbed.node.container import Container
 from fogbed.resources import ResourceModel
 
@@ -48,7 +47,7 @@ class VirtualInstance(object):
         if(self.resource_model is None):
             raise ResourceModelNotFound('Assign a resource model to this virtual instance.')
         
-        self.set_default_params(container)
+        self._set_default_params(container)
         self.resource_model.allocate(container)
         self.containers[container.name] = container
 
@@ -57,7 +56,18 @@ class VirtualInstance(object):
         VirtualInstance.COUNTER += 1
         return self.topology.addSwitch(f's{VirtualInstance.COUNTER}')
     
-    def set_default_params(self, container: Container):
+
+    def remove_container(self, name: str):
+        if(not name in self.containers):
+            ContainerNotFound(f'Container {name} not found.')
+        
+        container = self.containers[name]
+        if(self.resource_model is not None):
+            self.resource_model.free(container)
+        self.containers.pop(name)
+    
+
+    def _set_default_params(self, container: Container):
         if(container.params.get('dimage') is None):
             container.params['dimage'] = 'ubuntu:trusty'
 
@@ -84,10 +94,13 @@ class VirtualInstance(object):
         return self.resource_model.max_mu
 
     def __repr__(self) -> str:
+        return f'VirtualInstance(name={self.label})'
+
+    def __str__(self) -> str:
         containers = [repr(container) for container in self.containers.values()]
         header = f'[{self.label}]\n'
         return header + '\n'.join(containers)
-
+    
     def __iter__(self):
         for container in chain(self.containers.values()):
             yield container

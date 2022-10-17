@@ -7,7 +7,11 @@ class DivisionMethod(Enum):
     RANDOM = auto()
 
 class FailMode(Enum):
-    ALPHA = auto()
+    CRASH = auto()
+
+class SelectionMethod(Enum):
+    SEQUENTIAL = auto()
+    RANDOM = auto()
 
 class FailModel(ABC):
     def __init__(self):
