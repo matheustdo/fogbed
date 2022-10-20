@@ -1,5 +1,5 @@
 from typing import Any, Dict, Optional
-from fogbed.fails import FailModel
+from fogbed.fails.models import FailModel
 
 from mininet.node import Docker
 

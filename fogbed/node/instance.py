@@ -2,7 +2,7 @@ from itertools import chain
 from typing import Dict, Optional
 
 from fogbed.exceptions import ContainerNotFound, ResourceModelNotFound
-from fogbed.fails import FailModel
+from fogbed.fails.models import FailModel
 from fogbed.node.container import Container
 from fogbed.resources import ResourceModel
 

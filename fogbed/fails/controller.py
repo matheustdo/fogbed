@@ -1,7 +1,8 @@
 from threading import Timer
-from typing import List
+from typing import List, Union
 from fogbed.experiment import Experiment
-from fogbed.fails import FailMode
+from fogbed.fails.models import FailMode, Intervaler
+from fogbed.fails.models.availability import AvailabilityCycler
 from fogbed.fails.utils import calculate_division, stop_node_on_time, stop_nodes_on_time
 from fogbed.node.container import Container
 from fogbed.node.instance import VirtualInstance
@@ -10,7 +11,7 @@ from fogbed.node.instance import VirtualInstance
 class FailController:
     def __init__(self, experiment: Experiment):
         self.experiment = experiment
-        self.thread_list: List[Timer] = []
+        self.thread_list: List[Union[Timer, Intervaler]] = []
 
 
     def switch_virtual_instance_fail(self, virtual_instance: VirtualInstance):
@@ -19,9 +20,12 @@ class FailController:
 
         if mode == FailMode.CRASH:
             thread = stop_nodes_on_time(self.experiment, virtual_instance, fail_model.fail_rate, fail_model.life_time, fail_model.division_method, fail_model.selection_method)
-            self.thread_list.append(thread)
             thread.start()
-
+            self.thread_list.append(thread)
+        elif mode == FailMode.AVAILABILITY:
+            thread = AvailabilityCycler(self.experiment, virtual_instance, fail_model.availability, fail_model.slot_time)
+            thread.start()
+            self.thread_list.append(thread)
 
     def switch_node_fail(self, node: Container):
         fail_model = node.fail_model
@@ -29,8 +33,8 @@ class FailController:
         
         if mode == FailMode.CRASH:
             thread = stop_node_on_time(self.experiment, node, fail_model.life_time)
-            self.thread_list.append(thread)
             thread.start()
+            self.thread_list.append(thread)
 
 
     def start(self):

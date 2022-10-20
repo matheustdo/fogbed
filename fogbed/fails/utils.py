@@ -52,6 +52,7 @@ def stop_nodes_on_time(experiment: Experiment, vi: VirtualInstance, fail_rate: f
     timer = Timer(life_time, action, [])
     return timer
 
+
 '''
 async def down_node_net(node: Docker,  secs: float):
     print('* Net down scheduled for ' + node.name + ' in ' + str(secs) + 's...')

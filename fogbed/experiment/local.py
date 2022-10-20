@@ -4,7 +4,7 @@ from typing import List, Optional, Type
 from fogbed.emulation import EmulationCore
 from fogbed.exceptions import ContainerAlreadyExists, ContainerNotFound, NotEnoughResourcesAvailable, VirtualInstanceAlreadyExists
 from fogbed.experiment import Experiment
-from fogbed.fails import FailModel
+from fogbed.fails.models import FailModel
 from fogbed.net import Fogbed
 from fogbed.node.container import Container
 from fogbed.node.instance import VirtualInstance
