@@ -5,6 +5,7 @@ from fogbed.fails.models import FailMode, FailModel
 
 
 class CrashFail(FailModel):
+    """ This fail kills a node or a virtual instance set of nodes after the specified time """
     def __init__(self, fail_rate=0.5, split_method=SplitMethod.UP, life_time=30, selection_method=SelectionMethod.SEQUENTIAL):
         self.fail_rate = fail_rate
         self.selection_method = selection_method

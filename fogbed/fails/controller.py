@@ -4,7 +4,7 @@ from fogbed.experiment import Experiment
 from fogbed.fails import Cycler
 from fogbed.fails.models import FailMode
 from fogbed.fails.models.availability import AvailabilityCycler
-from fogbed.fails.utils import kill_node_on_time, kill_nodes_on_time, down_node_net_on_time
+from fogbed.fails.utils import down_nodes_net_on_time, kill_node_on_time, kill_nodes_on_time, down_node_net_on_time
 from fogbed.node.container import Container
 from fogbed.node.instance import VirtualInstance
 
@@ -22,13 +22,17 @@ class FailController:
             virtual_instance: virtual_instance with the fail """
         fail_model = virtual_instance.fail_model
         mode = fail_model.mode
-
+        
         if mode == FailMode.CRASH:
             thread = kill_nodes_on_time(self.experiment, virtual_instance, fail_model.fail_rate, fail_model.life_time, fail_model.split_method, fail_model.selection_method)
             thread.start()
             self.thread_list.append(thread)
+        elif mode == FailMode.DISCONNECT:
+            thread = down_nodes_net_on_time(virtual_instance, fail_model.fail_rate, fail_model.life_time, fail_model.split_method, fail_model.selection_method)
+            thread.start()
+            self.thread_list.append(thread)
         elif mode == FailMode.AVAILABILITY:
-            thread = AvailabilityCycler(self.experiment, virtual_instance, fail_model.availability, fail_model.slot_time)
+            thread = AvailabilityCycler(fail_model.slot_time, fail_model.availability_mode, self.experiment, virtual_instance, fail_model.availability)
             thread.start()
             self.thread_list.append(thread)
 

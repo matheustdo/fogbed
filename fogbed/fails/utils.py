@@ -28,11 +28,12 @@ def kill_node(experiment: Experiment, node_name: str):
     experiment.remove_docker(node_name)
 
 
-def add_node(experiment: Experiment, node: Container):
+def add_node(experiment: Experiment, node: Container, vi: VirtualInstance):
     """ Adds a new node in the experiment
         experiment: experiment to add a node
-        node: node to be added """
-    experiment.add_docker(node)
+        node: node to be added
+        vi: virtual instance to add a node """
+    experiment.add_docker(node, vi)
 
 
 def kill_node_on_time(experiment: Experiment, node: Container, life_time: int):
@@ -100,6 +101,44 @@ def down_node_net_on_time(node: Container, life_time: int):
     def action():
         down_node_net(node)
     
+    timer = Timer(life_time, action, [])
+    return timer
+
+
+def down_nodes_net_on_time(vi: VirtualInstance, fail_rate: float, life_time: int, split_method: SplitMethod, selection_method: SelectionMethod):
+    """ Down several nodes after the time passed by the life_time argument, the amount of
+        nodes to be disconnected is determined by the fail_rate and the split_method and the nodes
+        will be selected by the selection_method
+        vi: virtual instance to down a node
+        node_name: name of the node to be disconnected
+        fail_rate: rate that determines what percentage of nodes will be disconnected
+        lime_time: time waited before the down action
+        split_method: how the split will be done
+        selection_method: how the nodes to be disconnected will be selected """
+    def action():
+        all_nodes = list(vi.containers.keys())
+        vi_len = len(vi.containers)
+        stop_amount = calculate_split(vi_len, fail_rate, split_method)
+
+        if(selection_method == SelectionMethod.SEQUENTIAL):
+            for idx, node_name in enumerate(all_nodes):
+                if (idx < stop_amount):
+                    down_node_net(vi.containers[node_name])
+                else:
+                    break
+        else:
+            idx_to_remove = random.sample(range(0, vi_len), stop_amount)
+            next_idx = idx_to_remove.pop(0)
+            
+            for idx, node_name in enumerate(all_nodes):
+                if (idx == next_idx):
+                    down_node_net(vi.containers[node_name])
+
+                    if (len(idx_to_remove) == 0):
+                        break
+
+                    next_idx = idx_to_remove.pop(0)
+                    
     timer = Timer(life_time, action, [])
     return timer
 
