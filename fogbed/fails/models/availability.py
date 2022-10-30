@@ -24,8 +24,8 @@ class AvailabilityFail(FailModel):
         super().__init__(FailMode.AVAILABILITY)
 
 
-class AvailabilityCycler(Cycler):
-    """ This cycler estends the Cycler to implement the availability failure """
+class InstanceAvailabilityCycler(Cycler):
+    """ This cycler extends the Cycler to implement the availability failure in virtual instances """
     def __init__(self, slot_time: float, availability_mode: AvailabilityMode, experiment: Experiment, vi: VirtualInstance, availability: float):
         self.availability_mode = availability_mode
         self.experiment = experiment
@@ -59,7 +59,7 @@ class AvailabilityCycler(Cycler):
         """ Handles the start according to the Availability Mode """
         if (self.availability_mode == AvailabilityMode.CRASH):
             params = self._all_containers[container_name].params
-            container = Container(container_name, params=params)    
+            container = Container(container_name, params=params)
             add_node(self.experiment, container, self.vi)
         elif (self.availability_mode == AvailabilityMode.DISCONNECT):
             container = self._all_containers[container_name]
@@ -69,7 +69,7 @@ class AvailabilityCycler(Cycler):
     def _update_current_names(self, down_names: list):
         """ Updates the current container names according to the Availability Mode """
         if (self.availability_mode == AvailabilityMode.CRASH):
-            self.cur_containers_names == list(self.vi.containers.keys())
+            self.cur_containers_names = list(self.vi.containers.keys())
         elif (self.availability_mode == AvailabilityMode.DISCONNECT):
             all_container_names = list(self._all_containers.keys())
             self.cur_containers_names = [x for x in all_container_names if x not in set(down_names)]
@@ -93,7 +93,7 @@ class AvailabilityCycler(Cycler):
     def _calculate_cycle_size(self):
         """ Calculates the cycle size """
         all_containers_amount = len(self._all_containers)
-        division_factor = round(all_containers_amount * self.availability, 1)
+        division_factor = round(all_containers_amount * (1 - self.availability), 1)
         integer_part = int(division_factor) 
         decimal_part = int((division_factor % 1)* 10) 
 
@@ -104,13 +104,14 @@ class AvailabilityCycler(Cycler):
             self.cycle_size = numerator
             self.cycle_part = denominator
             self.cycle_amount = integer_part
+        else: 
+            self.cycle_amount = int(division_factor)
 
     def action(self):
         """ Run every slot """
         all_containers_names = list(self._all_containers.keys())
         all_containers_amount = len(self._all_containers)
         stop_amount = self._calcule_stop_amount()
-        self._update_average(stop_amount)
         down_sorted_idxs = random.sample(range(0, all_containers_amount), stop_amount)
         down_sorted_names = [all_containers_names[down_sorted_idxs[i]] for i, x in enumerate(down_sorted_idxs)]
         to_stop = []
@@ -123,7 +124,7 @@ class AvailabilityCycler(Cycler):
         for container_name in to_stop:
             ''' Stop containers '''
             self._stop_action(container_name)
-            
+
         if (self.slot_number > 0):
             to_start = []
 
@@ -137,6 +138,7 @@ class AvailabilityCycler(Cycler):
                 self._start_action(container_name)
                 
         self._update_current_names(down_sorted_names)
+        self._update_average(len(self.cur_containers_names))
         super().action()
 
 
@@ -145,3 +147,18 @@ class AvailabilityCycler(Cycler):
         self._calculate_cycle_size()
         self.action()
         super().start()
+
+
+class NodeAvailabilityCycler(Cycler):
+    """ This cycler extends the Cycler to implement the availability failure on individual nodes """
+    def __init__(self, slot_time: float, availability_mode: AvailabilityMode, experiment: Experiment, vi: VirtualInstance, node: Container, availability: float):
+        self.availability_mode = availability_mode
+        self.experiment = experiment
+        self.vi = vi
+        self.node = node
+        self.availability = availability
+        self.cycle_size = 1
+        self.cycle_part = 0
+        self.cycle_slot = 0
+        self.average = 0
+        super().__init__(slot_time)
