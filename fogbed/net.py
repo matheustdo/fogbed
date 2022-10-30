@@ -1,6 +1,5 @@
 from mininet.net import Containernet
-from mininet.node import Host
-from mininet.link import Link
+from mininet.node import Docker
 
 from fogbed.node.instance import VirtualInstance
 
@@ -9,14 +8,14 @@ class Fogbed(Containernet):
         super().__init__(**params)
         self.is_running = False
     
-    def addLink(self, node1, node2, **params) -> Link:
+    def addLink(self, node1, node2, **params):
         assert node1 is not None
         assert node2 is not None
         
         if(isinstance(node1, VirtualInstance)): node1 = node1.switch
         if(isinstance(node2, VirtualInstance)): node2 = node2.switch
 
-        return Containernet.addLink(self, node1, node2, **params)
+        super().addLink(node1, node2, **params)
 
 
     def removeLink(self, node1, node2, **params):
@@ -28,7 +27,11 @@ class Fogbed(Containernet):
 
         super().removeLink(node1=node1, node2=node2, **params)
 
-    def getHost(self, name: str) -> Host:
+    def getDocker(self, name: str) -> Docker:
+        container_names = [docker.name for docker in self.hosts]
+        if(not name in container_names):
+            raise Exception(f'Container {name} not found.')
+            
         return self[name]
 
     def start(self):
