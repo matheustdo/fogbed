@@ -40,8 +40,9 @@ class InstanceAvailabilityCycler(Cycler):
         super().__init__(slot_time)
 
 
-    def _update_average(self, amount: int):
+    def _update_average(self):
         """ Updates the current average for the vi availability """
+        amount = len(self.cur_containers_names)
         self.average = ((self.average * (self.slot_number)) + (amount / len(self._all_containers))) / (self.slot_number + 1)
         info(f'\n*** Availability average updated for {self.vi.label}: ' + str(self.average))
 
@@ -90,6 +91,7 @@ class InstanceAvailabilityCycler(Cycler):
         else:
             return self.cycle_amount
 
+
     def _calculate_cycle_size(self):
         """ Calculates the cycle size """
         all_containers_amount = len(self._all_containers)
@@ -99,13 +101,12 @@ class InstanceAvailabilityCycler(Cycler):
 
         if (decimal_part > 0):
             simplified_parts = Fraction(10, decimal_part)
-            numerator = simplified_parts.numerator
-            denominator = simplified_parts.denominator
-            self.cycle_size = numerator
-            self.cycle_part = denominator
+            self.cycle_size = simplified_parts.numerator
+            self.cycle_part = simplified_parts.denominator
             self.cycle_amount = integer_part
         else: 
             self.cycle_amount = int(division_factor)
+
 
     def action(self):
         """ Run every slot """
@@ -138,7 +139,7 @@ class InstanceAvailabilityCycler(Cycler):
                 self._start_action(container_name)
                 
         self._update_current_names(down_sorted_names)
-        self._update_average(len(self.cur_containers_names))
+        self._update_average()
         super().action()
 
 
@@ -161,4 +162,78 @@ class NodeAvailabilityCycler(Cycler):
         self.cycle_part = 0
         self.cycle_slot = 0
         self.average = 0
+        self.is_node_on = True
         super().__init__(slot_time)
+
+
+    def _update_average(self):
+        """ Updates the current average for the node availability """
+        amount = 1 if self.is_node_on else 0
+        self.average = ((self.average * (self.slot_number)) + amount) / (self.slot_number + 1)
+        info(f'\n*** Availability average updated for {self.node.name}: ' + str(self.average))
+
+
+    def _stop_action(self):
+        """ Handles the stop according to the Availability Mode """
+        if (self.availability_mode == AvailabilityMode.CRASH):
+            kill_node(self.experiment, self.node.name)
+        elif (self.availability_mode == AvailabilityMode.DISCONNECT):
+            down_node_net(self.node)
+
+        self.is_node_on = False
+
+
+    def _start_action(self):
+        """ Handles the start according to the Availability Mode """
+        if (self.availability_mode == AvailabilityMode.CRASH):
+            params = self.node.params
+            container = Container(self.node.name, params=params)
+            add_node(self.experiment, container, self.vi)
+        elif (self.availability_mode == AvailabilityMode.DISCONNECT):
+            up_node_net(self.node)
+
+        self.is_node_on = True
+
+
+    def _should_be_on(self):
+        """ Discover if the node should be on or off on the current slot """
+        if (self.cycle_slot >= self.cycle_size):
+            self.cycle_slot = 0
+
+        if (self.cycle_slot < self.cycle_part):
+            self.cycle_slot += 1
+            return True 
+        
+        if (self.cycle_slot < self.cycle_size):
+            self.cycle_slot += 1
+            return False
+        
+        return False
+        
+
+    def action(self):
+        """ Run every slot """
+        if (self._should_be_on()):
+            if (not self.is_node_on):
+                self._start_action()
+        else:
+            if (self.is_node_on):
+                self._stop_action()
+
+        self._update_average()
+        super().action()
+
+
+    def _calculate_cycle_size(self):
+        """ Calculates the cycle size """
+        division_factor = int(10 * self.availability)
+        simplified_parts = Fraction(10, division_factor)
+        self.cycle_size = simplified_parts.numerator
+        self.cycle_part = simplified_parts.denominator
+
+
+    def start(self):
+        """ Starts the cycler """
+        self._calculate_cycle_size()
+        self.action()
+        super().start()
