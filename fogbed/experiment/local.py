@@ -1,10 +1,15 @@
 from typing import List, Optional, Type
 
 
-from fogbed.emulation import EmulationCore
-from fogbed.exceptions import ContainerAlreadyExists, ContainerNotFound, NotEnoughResourcesAvailable, VirtualInstanceAlreadyExists
+from fogbed.emulation import Services
+from fogbed.exceptions import ContainerNotFound, NotEnoughResourcesAvailable
 from fogbed.experiment import Experiment
 from fogbed.fails.models import FailModel
+from fogbed.experiment.helpers import (
+    verify_if_container_ip_exists,
+    verify_if_container_name_exists,
+    verify_if_datacenter_exists
+)
 from fogbed.net import Fogbed
 from fogbed.node.container import Container
 from fogbed.node.instance import VirtualInstance
@@ -28,23 +33,21 @@ class FogbedExperiment(Experiment):
 
 
     def add_virtual_instance(self, name: str, resource_model: ResourceModel, fail_model: Optional[FailModel] = None ) -> VirtualInstance:
-        if(name in EmulationCore.virtual_instances()):
-            raise VirtualInstanceAlreadyExists(f'Datacenter {name} already exists.')
-        
+        verify_if_datacenter_exists(name)
         datacenter = VirtualInstance(name)
         datacenter.assignResourceModel(resource_model)
 
         if(fail_model is not None):
             datacenter.assignFailModel(fail_model)
 
-        EmulationCore.add_virtual_instance(datacenter)
+        Services.add_virtual_instance(datacenter)
         self.topology.addSwitch(datacenter.switch)
         return datacenter
     
 
     def add_docker(self, container: Container, datacenter: VirtualInstance):
-        if(container in self.get_containers()):
-            raise ContainerAlreadyExists(f'Container {container.name} already exists.')
+        verify_if_container_name_exists(container.name)
+        verify_if_container_ip_exists(container.ip)
         
         try:
             datacenter.create_container(container)
@@ -63,21 +66,23 @@ class FogbedExperiment(Experiment):
     
 
     def get_docker(self, name: str) -> Container:
-        for container in self.get_containers():
-            if(name == container.name): return container
-        raise ContainerNotFound(f'Container {name} not found.')
+        container = Services.get_container_by_name(name)
+        
+        if(container is None):
+            raise ContainerNotFound(f'Container {name} not found.')
+        return container
 
 
     def get_containers(self) -> List[Container]:
-        return EmulationCore.get_all_containers()
+        return Services.get_all_containers()
 
 
     def get_virtual_instances(self) -> List[VirtualInstance]:
-        return list(EmulationCore.virtual_instances().values())
+        return list(Services.virtual_instances().values())
 
 
     def remove_docker(self, name: str):            
-        datacenter = EmulationCore.get_virtual_instance_by_container(name)
+        datacenter = Services.get_virtual_instance_by_container(name)
         datacenter.remove_container(name)
 
         if(self.net.is_running):

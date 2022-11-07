@@ -6,17 +6,16 @@ from fogbed.fails.models import FailModel
 from fogbed.node.container import Container
 from fogbed.resources import ResourceModel
 
-from mininet.node import Docker
-from mininet.topo import Topo
 
 
 class VirtualInstance(object):
     COUNTER = 0
 
     def __init__(self, name: str) -> None:
-        self.label   = name
-        self.switch  = self._create_switch()
-        self._ip     = ''
+        self.label      = name
+        self.switch     = self._create_switch()
+        self._ip        = ''
+        self._reachable = False
         self.containers: Dict[str, Container] = {}
         self.resource_model: Optional[ResourceModel] = None
         self.fail_model: Optional[FailModel] = None
@@ -44,16 +43,6 @@ class VirtualInstance(object):
         return f's{VirtualInstance.COUNTER}'
     
 
-    def create_topology(self) -> Topo:
-        topology = Topo()
-        topology.addSwitch(self.switch)
-        
-        for container in self.containers.values():
-            topology.addHost(container.name, cls=Docker, **container.params)
-            topology.addLink(container.name, self.switch)
-        return topology
-    
-
     def remove_container(self, name: str):
         if(not name in self.containers):
             ContainerNotFound(f'Container {name} not found.')
@@ -68,13 +57,17 @@ class VirtualInstance(object):
 
     def set_ip(self, ip: str):
         self._ip = ip
+    
+    def set_reachable(self, reachable: bool):
+        self._reachable = reachable
         
     def _set_default_params(self, container: Container):
-        if(container.params.get('dimage') is None):
-            container.params['dimage'] = 'ubuntu:trusty'
-
         if(container.resources is None):
-            container.params['resources'] = ResourceModel.TINY
+            container._params['resources'] = ResourceModel.TINY
+
+    @property
+    def is_reachable(self) -> bool:
+        return self._reachable
 
     @property
     def compute_units(self) -> float:

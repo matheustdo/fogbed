@@ -34,7 +34,7 @@ sudo python3 filename.py
 
 ### Local emulation
 ```python
-from fogbed.emulation import EmulationCore
+from fogbed.emulation import Services
 from fogbed.experiment.local import FogbedExperiment
 from fogbed.node.container import Container
 from fogbed.resources import ResourceModel
@@ -44,7 +44,7 @@ from mininet.log import setLogLevel
 
 setLogLevel('info')
 
-EmulationCore(max_cpu=0.5, max_mem=512)
+Services(max_cpu=0.5, max_mem=512)
 exp = FogbedExperiment()
 
 cloud = exp.add_virtual_instance('cloud', CloudResourceModel(max_cu=8, max_mu=1024))
@@ -94,6 +94,8 @@ The resource model use is based on the proposed in [son-emu](https://github.com/
 You can also create containers with custom resource restrictions like in [Containernet](https://github.com/containernet/containernet/wiki#method-containernetadddocker)
 
 ```python
+from fogbed.node.container import Container
+
 d1 = Container('d1', ip='10.0.0.1', dimage='ubuntu:trusty', dcmd='bin/bash')
 d2 = Container('d2', ip='10.0.0.2', dimage='ubuntu:focal', mac='00:00:00:00:00:02')
 d3 = Container('d3', ip='10.0.0.3', enviroment={'var1': 'value'})
