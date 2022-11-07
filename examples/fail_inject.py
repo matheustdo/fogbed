@@ -13,7 +13,6 @@ exp = FogbedExperiment()
 edge = exp.add_virtual_instance('edge', EdgeResourceModel(max_cu=2, max_mu=256))
 cloud = exp.add_virtual_instance('cloud', CloudResourceModel(max_cu=2, max_mu=512), AvailabilityFail(availability=0.8, slot_time=1, availability_mode=AvailabilityMode.DISCONNECT))
 
-
 d1 = Container('d1', resources=ResourceModel.SMALL)
 d2 = Container('d2', resources=ResourceModel.SMALL, fail_model=DisconnectFail(life_time=15))
 d3 = Container('d3', resources=ResourceModel.SMALL)
