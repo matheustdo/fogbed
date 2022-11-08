@@ -89,12 +89,16 @@ class Container:
         return 0 if(resources is None) else resources['mu']
 
     @property
+    def fail_model(self) -> 'FailModel | None':
+        fail_model = self.params.get('fail_model')
+        return fail_model
+
+    @property
     def params(self) -> Dict[str, Any]:
         self._params['ip'] = self.ip
         self._params['dimage'] = self.dimage
         return self._params
 
-    @property
     def __repr__(self) -> str:
         cpu_quota  = self.cpu_quota
         cpu_period = self.cpu_period
