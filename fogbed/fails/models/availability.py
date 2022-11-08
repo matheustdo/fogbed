@@ -26,7 +26,7 @@ class AvailabilityFail(FailModel):
 
 class InstanceAvailabilityCycler(Cycler):
     """ This cycler extends the Cycler to implement the availability failure in virtual instances """
-    def __init__(self, slot_time: float, availability_mode: AvailabilityMode, experiment: Experiment, vi: VirtualInstance, availability: float):
+    def __init__(self, slot_time: int, availability_mode: AvailabilityMode, experiment: Experiment, vi: VirtualInstance, availability: float):
         self.availability_mode = availability_mode
         self.experiment = experiment
         self.vi = vi
@@ -113,7 +113,7 @@ class InstanceAvailabilityCycler(Cycler):
         all_containers_names = list(self._all_containers.keys())
         all_containers_amount = len(self._all_containers)
         stop_amount = self._calcule_stop_amount()
-        down_sorted_idxs = random.sample(range(0, all_containers_amount), stop_amount)
+        down_sorted_idxs = random.sample(range(0, all_containers_amount), stop_amount)  # type: ignore
         down_sorted_names = [all_containers_names[down_sorted_idxs[i]] for i, x in enumerate(down_sorted_idxs)]
         to_stop = []
         
@@ -152,7 +152,7 @@ class InstanceAvailabilityCycler(Cycler):
 
 class NodeAvailabilityCycler(Cycler):
     """ This cycler extends the Cycler to implement the availability failure on individual nodes """
-    def __init__(self, slot_time: float, availability_mode: AvailabilityMode, experiment: Experiment, vi: VirtualInstance, node: Container, availability: float):
+    def __init__(self, slot_time: int, availability_mode: AvailabilityMode, experiment: Experiment, vi: VirtualInstance, node: Container, availability: float):
         self.availability_mode = availability_mode
         self.experiment = experiment
         self.vi = vi
