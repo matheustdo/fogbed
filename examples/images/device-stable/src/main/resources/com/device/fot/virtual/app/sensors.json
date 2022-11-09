@@ -1,0 +1,27 @@
+[
+    {
+        "id": "temperatureSensor",
+        "type": "Thermometer",
+        "collection_time": 0,
+        "publishing_time": 0
+    },
+    {
+        "id": "humiditySensor",
+        "type": "HumiditySensor",
+        "collection_time": 0,
+        "publishing_time": 0
+    },
+    {
+        "id": "pulseOxymeter",
+        "type": "PulseOxymeter",
+        "collection_time": 0,
+        "publishing_time": 0
+    },
+        {
+        "id": "windDirectionSensor",
+        "type": "WindDirectionSensor",
+        "collection_time": 0,
+        "publishing_time": 0
+    }
+]
+
