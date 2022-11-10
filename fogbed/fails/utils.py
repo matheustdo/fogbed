@@ -92,6 +92,7 @@ def down_node_net(node: Container):
     """ Downs the node net
         node: node to be disconnected """
     node.cmd('ifconfig ' + node.name + '-eth0 down')
+    node.cmd('ifconfig eth0 down')
 
 
 def down_node_net_on_time(node: Container, life_time: int):
@@ -147,6 +148,7 @@ def up_node_net(node: Container):
     """ Ups the node net
         node: node to be reconnected """
     node.cmd('ifconfig ' + node.name + '-eth0 up')
+    node.cmd('ifconfig eth0 up')
 
 
 def up_node_net_on_time(node: Container, life_time: int):

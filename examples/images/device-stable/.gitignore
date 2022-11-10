@@ -1,6 +1,0 @@
-!target/
-target/*
-!target/*.jar
-nb-configuration.xml
-nbactions.xml
-Dockerfile.save
