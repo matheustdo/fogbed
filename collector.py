@@ -8,8 +8,7 @@ import timeit
 def current_time():
   return timeit.default_timer() * 1000
 
-
-def sensor_collect(url, min_sample_interval, experiment_duration, is_sensor_active, exp_number):
+def sensor_collect(url, experiment_duration, is_sensor_active, exp_number):
   response = urlopen(url)
   devices_json = json.loads(response.read())
   device_name_list = []
@@ -17,16 +16,16 @@ def sensor_collect(url, min_sample_interval, experiment_duration, is_sensor_acti
   experiment_start_timestamp = time.time() * 1000
 
   for device in devices_json:
-    device_name_list.append(device["id"])
-
+    if device["id"] not in device_name_list:
+      device_name_list.append(device["id"])
+      
   experiment_current_time = current_time() - experiment_start_time
   results = []
-  sleep_duration = min_sample_interval / 1000
+  # sleep_duration = min_sample_interval / 1000
   start_time = timeit.default_timer()
   
   # Experiment
   while experiment_current_time < experiment_duration and timeit.default_timer() - start_time < 150:
-    # Gets all devices data and append to results list
     # time.sleep(sleep_duration)
     sample = []
     
@@ -69,5 +68,3 @@ def sensor_collect(url, min_sample_interval, experiment_duration, is_sensor_acti
               "%.4f" % ((device["expStart"] / 1000 - (device["startTime"] - experiment_start_timestamp) / 1000) + min),
               device["actived"]])
             break
-          
-  return 0
