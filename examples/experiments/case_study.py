@@ -5,7 +5,7 @@ from urllib.request import urlopen
 
 url = "http://localhost:8181/cxf/iot-service/devices/"
 min_sample_interval = 200 # publish_time = 2000
-experiment_duration = 10000
+experiment_duration = 20000
 
 # Calculate current time in milliseconds
 def current_time():
