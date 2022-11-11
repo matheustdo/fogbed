@@ -1,7 +1,7 @@
 import csv
 import matplotlib.pyplot as plt
 
-ficheiro = open('result.csv', 'r')
+ficheiro = open('examples/experiments/result.csv', 'r')
 
 x = []
 y_1 = []
