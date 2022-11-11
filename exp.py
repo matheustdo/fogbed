@@ -1,9 +1,9 @@
 import subprocess
 
-experiment_size = 2
+experiment_size = 30
 exp_number = 1
 min_sample_interval = 100 
-experiment_duration = 5000
+experiment_duration = 40000
 
 result = 1
 
