@@ -91,23 +91,25 @@ def init_device(device):
   if (not started):
     raise Exception("url timeout")
   
-
 Services(max_cpu=6, max_mem=4096)
 exp = FogbedExperiment()
 
 #cloud = exp.add_virtual_instance('cloud', CloudResourceModel(max_cu=2, max_mu=1024))
-fog = exp.add_virtual_instance(f'fog', FogResourceModel(max_cu=2, max_mu=1024))
-edge = exp.add_virtual_instance(f'edge', EdgeResourceModel(max_cu=2, max_mu=1024)) #, AvailabilityFail(availability=0.5, slot_time=2, availability_mode=AvailabilityMode.DISCONNECT))
+fog = exp.add_virtual_instance(f'fog', FogResourceModel(max_cu=16, max_mu=1024))
+edge = exp.add_virtual_instance(f'edge', EdgeResourceModel(max_cu=3, max_mu=1024)) #, AvailabilityFail(availability=0.5, slot_time=2, availability_mode=AvailabilityMode.DISCONNECT))
 
 #gateway_cloud = Container('gate_cloud', resources=ResourceModel.XLARGE)
-gateway_fog = Container(f'gate_fog', resources=ResourceModel.XLARGE, dimage="matheustdo/gateway:publishing", environment={"COLLECT_TIME": "200","PUBLISH_TIME": "1000"}, port_bindings={1883:1883, 8181:8181, 1099:1099, 8101:8101, 61616:61616, 44444:44444})
-device_1 = Container(f'device_1', resources=ResourceModel.SMALL, dimage='matheustdo/device:latest', fail_model=AvailabilityFail(availability=0.5, slot_time=2, availability_mode=AvailabilityMode.DISCONNECT)) 
-device_2 = Container(f'device_2', resources=ResourceModel.SMALL, dimage='matheustdo/device:latest') 
+gateway_fog = Container(f'gate_fog', resources=ResourceModel.XLARGE, dimage="matheustdo/gateway:publishing", environment={"COLLECT_TIME": "100","PUBLISH_TIME": "1000"}, port_bindings={1883:1883, 8181:8181, 1099:1099, 8101:8101, 61616:61616, 44444:44444})
+device_1 = Container(f'device_1', resources=ResourceModel.SMALL, dimage='matheustdo/device:latest') 
+device_2 = Container(f'device_2', resources=ResourceModel.SMALL, dimage='matheustdo/device:latest', fail_model=AvailabilityFail(availability=0.5, slot_time=2, availability_mode=AvailabilityMode.DISCONNECT)) 
+device_3 = Container(f'device_3', resources=ResourceModel.SMALL, dimage='matheustdo/device:latest', fail_model=AvailabilityFail(availability=0.2, slot_time=3, availability_mode=AvailabilityMode.DISCONNECT)) 
+
 
 #exp.add_docker(gateway_cloud, cloud)
 exp.add_docker(gateway_fog, fog)
 exp.add_docker(device_1, edge)
 exp.add_docker(device_2, edge)
+exp.add_docker(device_3, edge)
 
 #exp.add_link(cloud, fog)
 exp.add_link(fog, edge)
@@ -118,10 +120,10 @@ collect_return = 1
 
 try:
     exp.start()
-    print(f"### Experiment number {exp_number}")
     init_gateway(gateway_fog)
     init_device(device_1)
     init_device(device_2)
+    init_device(device_3)
     
     time.sleep(2)
     fail_controller.start()

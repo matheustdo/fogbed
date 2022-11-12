@@ -32,13 +32,16 @@ def sensor_collect(url, experiment_duration, is_sensor_active, exp_number):
     for device_name in device_name_list:
       device_url = url + device_name + "/temperatureSensor"
       response = urlopen(device_url)
+      lastPublishTime = current_time() - experiment_start_time
       actived = is_sensor_active(device_name)
+      activedTime = current_time() - experiment_start_time
       device_json = json.loads(response.read())
       device = { "id": device_name, 
                   "value": device_json["value"], 
-                  "startTime": device_json["startTime"],
-                  "expStart": experiment_current_time,
-                  "actived": actived }
+                  "lastPublish": device_json["startTime"],
+                  "lastPublishTime": lastPublishTime,
+                  "actived": actived,
+                  "activedTime": activedTime }
 
       sample.append(device)
 
@@ -49,35 +52,37 @@ def sensor_collect(url, experiment_duration, is_sensor_active, exp_number):
 
   for result in results:
     for device in result:
-      calc = device["expStart"] / 1000 - (device["startTime"] - experiment_start_timestamp) / 1000
+      calc = device["lastPublishTime"] / 1000 - (device["lastPublish"] - experiment_start_timestamp) / 1000
       if calc < min:
         min = calc
         
   min = abs(min)
 
   if (exp_number == 1):
-    with open('./examples/experiments/result.csv', 'w') as csvfile: 
-      csv.writer(csvfile, delimiter=',').writerow(["expNumber", "id", "expStart", "lastUpdate", "actived"])
-      
+    with open('./examples/results/result.csv', 'w') as csvfile: 
+      csv.writer(csvfile, delimiter=',').writerow(["expNumber", "id", "lastPublishTime", "lastPublish", "activedTime", "actived"])
+
       for name in device_name_list:
         for result in results:
           for device in result:
             if name == device["id"]:
               csv.writer(csvfile, delimiter=',').writerow([exp_number, 
                 device["id"], 
-                "%.4f" % (device["expStart"] / 1000),
-                "%.4f" % ((device["expStart"] / 1000 - (device["startTime"] - experiment_start_timestamp) / 1000) + min),
+                "%.5f" % (device["lastPublishTime"] / 1000),
+                "%.5f" % ((device["lastPublishTime"] / 1000 - (device["lastPublish"] - experiment_start_timestamp) / 1000) + min),
+                "%.5f" % (device["activedTime"] / 1000),
                 device["actived"]])
               break
   else:
-    with open('./examples/experiments/result.csv', 'a+') as csvfile: 
+    with open('./examples/results/result.csv', 'a+') as csvfile: 
       for name in device_name_list:
         for result in results:
           for device in result:
             if name == device["id"]:
               csv.writer(csvfile, delimiter=',').writerow([exp_number, 
                 device["id"], 
-                "%.4f" % (device["expStart"] / 1000),
-                "%.4f" % ((device["expStart"] / 1000 - (device["startTime"] - experiment_start_timestamp) / 1000) + min),
+                "%.5f" % (device["lastPublishTime"] / 1000),
+                "%.5f" % ((device["lastPublishTime"] / 1000 - (device["lastPublish"] - experiment_start_timestamp) / 1000) + min),
+                "%.5f" % (device["activedTime"] / 1000),
                 device["actived"]])
               break
