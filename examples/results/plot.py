@@ -449,4 +449,146 @@ axs[2].text(0.99, 0.95, f'Tempo médio total: {round(total_average_3, 4)}s',
         transform=axs[2].transAxes,
         fontsize=12)
 
+# Calculate MTBF, MTTR and Disponibility
+
+device_1_onoff = []
+device_2_onoff = []
+device_3_onoff = []
+
+def set_on_off_arrays(device_array, appendArray):
+  for idx_1, item in enumerate(device_array):
+    auxOff = []
+    auxOn = []
+    lastValue = ""
+    failAmount = 0
+    last_fails = []
+    last_ons = []
+
+    for idx, aux in enumerate(item):
+      if (aux == 0):
+        if (lastValue == "ON"):
+          auxOn.append(last_ons[-1] - last_ons[0])
+          last_ons = []
+        lastValue = "OFF"
+        last_fails.append(x_active[idx_1][idx])
+      elif (aux == 1):
+        if (lastValue == "OFF"):
+          failAmount += 1
+          auxOff.append(last_fails[-1] - last_fails[0])
+          last_fails = []
+        lastValue = "ON"
+        last_ons.append(x_active[idx_1][idx])
+
+    if (failAmount == 0):
+      if (lastValue == "ON"):
+        auxOn.append(x_active[idx_1][-1] - x_active[idx_1][0])
+        auxOff.append(0)
+      elif (lastValue == "OFF"):
+        auxOff.append(x_active[idx_1][-1] - x_active[idx_1][0])
+        auxOn.append(0)
+
+    appendArray.append({"off": auxOff, "on": auxOn})
+
+set_on_off_arrays(y_device_1_active, device_1_onoff)
+set_on_off_arrays(y_device_2_active, device_2_onoff)
+set_on_off_arrays(y_device_3_active, device_3_onoff)
+
+device_1_onoff_avg = list(map(lambda item: {"on": np.average(item["on"]), "off": np.average(item["off"])}, device_1_onoff))
+device_2_onoff_avg = list(map(lambda item: {"on": np.average(item["on"]), "off": np.average(item["off"])}, device_2_onoff))
+device_3_onoff_avg = list(map(lambda item: {"on": np.average(item["on"]), "off": np.average(item["off"])}, device_3_onoff))
+device_1_on_avg_total = np.average(list(map(lambda item: item["on"], device_1_onoff_avg)))
+device_1_off_avg_total = np.average(list(map(lambda item: item["off"], device_1_onoff_avg)))
+device_2_on_avg_total = np.average(list(map(lambda item: item["on"], device_2_onoff_avg)))
+device_2_off_avg_total = np.average(list(map(lambda item: item["off"], device_2_onoff_avg)))
+device_3_on_avg_total = np.average(list(map(lambda item: item["on"], device_3_onoff_avg)))
+device_3_off_avg_total = np.average(list(map(lambda item: item["off"], device_3_onoff_avg)))
+device_1_off_avg_total_fail_amount = 0
+device_2_off_avg_total_fail_amount = np.average(list(map(lambda item: len(item["off"]), device_2_onoff)))
+device_3_off_avg_total_fail_amount = np.average(list(map(lambda item: len(item["off"]), device_3_onoff)))
+
+print(f"(30 exp. sample) Average of Device 1 ON time: {device_1_on_avg_total}")
+print(f"(30 exp. sample) Average of Device 1 OFF time: {device_1_off_avg_total}")
+print(f"(30 exp. sample) Average of Device 1 fail amount: {device_1_off_avg_total_fail_amount}")
+print(f"(30 exp. sample) Average of Device 2 ON time: {device_2_on_avg_total}")
+print(f"(30 exp. sample) Average of Device 2 OFF time: {device_2_off_avg_total}")
+print(f"(30 exp. sample) Average of Device 2 fail amount: {device_2_off_avg_total_fail_amount}")
+print(f"(30 exp. sample) Average of Device 3 ON time: {device_3_on_avg_total}")
+print(f"(30 exp. sample) Average of Device 3 OFF time: {device_3_off_avg_total}")
+print(f"(30 exp. sample) Average of Device 3 fail amount: {device_3_off_avg_total_fail_amount}")
+
+#print(device_1_on[0])
+
+fig, axs = plt.subplots(3, gridspec_kw={'height_ratios': [3, 3 ,3]})
+fig.subplots_adjust(left= 0.1,
+                    right= 0.9,
+                    top= 0.9,
+                    bottom= 0.1,
+                    hspace=0.2)
+                    
+black_color = (0, 0, 0)
+x_slim_size = (0, 60)
+y_slim_size = (0, 15)
+fig.suptitle('Amostra única', fontsize=14)
+
+axs[0].set_title("Dispositivo 1 (Disponibilidade 100%):")
+axs[0].step(x_active[1], y_device_1_active[1], color=black_color)
+axs[0].get_yaxis().set_visible(False)
+axs[0].set_xlim(x_slim_size)
+axs[0].set_xlabel("Tempo corrido de experimento (s)")
+
+axs[1].set_title("Dispositivo 2 (Disponibilidade 50%):")
+axs[1].step(x_active[1], y_device_2_active[1], color=black_color)
+axs[1].get_yaxis().set_visible(False)
+axs[1].set_xlim(x_slim_size)
+axs[1].set_xlabel("Tempo corrido de experimento (s)")
+red_patch = mpatches.Patch(color=red_color, label='Dispositivo desconectado')
+green_patch = mpatches.Patch(color=green_color, label='Dispositivo conectado')
+axs[1].legend(handles=[red_patch, green_patch], bbox_to_anchor=(1, -2), loc='upper right', borderaxespad=0.)
+
+axs[2].set_title("Dispositivo 3 (Disponibilidade 20%):")
+axs[2].step(x_active[1], y_device_3_active[1], color=black_color)
+axs[2].get_yaxis().set_visible(False)
+axs[2].set_xlim(x_slim_size)
+axs[2].set_xlabel("Tempo corrido de experimento (s)")
+red_patch = mpatches.Patch(color=red_color, label='Dispositivo desconectado')
+green_patch = mpatches.Patch(color=green_color, label='Dispositivo conectado')
+axs[2].legend(handles=[red_patch, green_patch], bbox_to_anchor=(1, -2), loc='upper right', borderaxespad=0.)
+
+
+fig, axs = plt.subplots(3, gridspec_kw={'height_ratios': [3, 3 ,3]})
+fig.subplots_adjust(left= 0.1,
+                    right= 0.9,
+                    top= 0.9,
+                    bottom= 0.1,
+                    hspace=0.2)
+                    
+black_color = (0, 0, 0)
+x_slim_size = (0, 60)
+y_slim_size = (0, 15)
+fig.suptitle('Média de 30 amostras', fontsize=14)
+
+axs[0].set_title("Dispositivo 1 (Disponibilidade 100%):")
+axs[0].plot(x_active_avg, y_device_1_active_avg, color=black_color)
+axs[0].get_yaxis().set_visible(False)
+axs[0].set_xlim(x_slim_size)
+axs[0].set_xlabel("Tempo corrido de experimento (s)")
+
+axs[1].set_title("Dispositivo 2 (Disponibilidade 50%):")
+axs[1].plot(x_active_avg, y_device_2_active_avg, color=black_color)
+axs[1].get_yaxis().set_visible(False)
+axs[1].set_xlim(x_slim_size)
+axs[1].set_xlabel("Tempo corrido de experimento (s)")
+red_patch = mpatches.Patch(color=red_color, label='Dispositivo desconectado')
+green_patch = mpatches.Patch(color=green_color, label='Dispositivo conectado')
+axs[1].legend(handles=[red_patch, green_patch], bbox_to_anchor=(1, -2), loc='upper right', borderaxespad=0.)
+
+axs[2].set_title("Dispositivo 3 (Disponibilidade 20%):")
+axs[2].plot(x_active_avg, y_device_3_active_avg, color=black_color)
+axs[2].get_yaxis().set_visible(False)
+axs[2].set_xlim(x_slim_size)
+axs[2].set_xlabel("Tempo corrido de experimento (s)")
+red_patch = mpatches.Patch(color=red_color, label='Dispositivo desconectado')
+green_patch = mpatches.Patch(color=green_color, label='Dispositivo conectado')
+axs[2].legend(handles=[red_patch, green_patch], bbox_to_anchor=(1, -2), loc='upper right', borderaxespad=0.)
+
 plt.show()
