@@ -4,6 +4,7 @@ import random
 import matplotlib.patches as mpatches
 import numpy as np
 import pandas as pd
+import math as math
 
 ficheiro = open('examples/results/result.csv', 'r')
 
@@ -506,6 +507,7 @@ device_1_off_avg_total_fail_amount = 0
 device_2_off_avg_total_fail_amount = np.average(list(map(lambda item: len(item["off"]), device_2_onoff)))
 device_3_off_avg_total_fail_amount = np.average(list(map(lambda item: len(item["off"]), device_3_onoff)))
 
+
 print(f"(30 exp. sample) Average of Device 1 ON time: {device_1_on_avg_total}")
 print(f"(30 exp. sample) Average of Device 1 OFF time: {device_1_off_avg_total}")
 print(f"(30 exp. sample) Average of Device 1 fail amount: {device_1_off_avg_total_fail_amount}")
@@ -591,4 +593,53 @@ red_patch = mpatches.Patch(color=red_color, label='Dispositivo desconectado')
 green_patch = mpatches.Patch(color=green_color, label='Dispositivo conectado')
 axs[2].legend(handles=[red_patch, green_patch], bbox_to_anchor=(1, -2), loc='upper right', borderaxespad=0.)
 
-plt.show()
+# plt.show()
+
+mtbf_device_1 = list(map(lambda item: item["on"], device_1_onoff_avg))
+mttr_device_1 = list(map(lambda item: item["off"], device_1_onoff_avg))
+mtbf_device_2 = list(map(lambda item: item["on"], device_2_onoff_avg))
+mttr_device_2 = list(map(lambda item: item["off"], device_2_onoff_avg))
+mtbf_device_3 = list(map(lambda item: item["on"], device_3_onoff_avg))
+mttr_device_3 = list(map(lambda item: item["off"], device_3_onoff_avg))
+
+def calc_disp(device_mtbf, device_mttr):
+  disp = []
+  
+  for idx, value in enumerate(device_mtbf):
+    disp.append((value / (value + device_mttr[idx])) * 100)
+
+  return disp
+
+disp_device_1 = calc_disp(mtbf_device_1, mttr_device_1)
+disp_device_2 = calc_disp(mtbf_device_2, mttr_device_2)
+disp_device_3 = calc_disp(mtbf_device_3, mttr_device_3)
+
+
+print(f"Average of device 1 (100%) mtbf: {np.average(mtbf_device_1)}")
+print(f"Average of device 1 (100%) mttr: {np.average(mttr_device_1)}")
+print(f"Average of device 1 (100%) availability: {np.average(disp_device_1)}")
+print(f"Average of device 2 (50%) mtbf: {np.average(mtbf_device_2)}")
+print(f"Average of device 2 (50%) mttr: {np.average(mttr_device_2)}")
+print(f"Average of device 2 (50%) availability: {np.average(disp_device_2)}")
+print(f"Average of device 3 (20%) mttr: {np.average(mtbf_device_3)}")
+print(f"Average of device 3 (20%) mtbf: {np.average(mttr_device_3)}")
+print(f"Average of device 3 (20%) availability: {np.average(disp_device_3)}")
+
+std_1 = np.std(disp_device_1)
+std_2 = np.std(disp_device_2)
+std_3 = np.std(disp_device_3)
+
+print(f"Standard deviation Device 1 fails: {std_1}")
+print(f"Standard deviation Device 2 fails: {std_2}")
+print(f"Standard deviation Device 3 fails: {std_3}")
+
+
+z = 1.96	 #  // 95% = 1.96 // 99% = 2.33 
+
+error_margin_1 = z * (std_1 / math.sqrt(len(disp_device_1)))
+error_margin_2 = z * (std_2 / math.sqrt(len(disp_device_2)))
+error_margin_3 = z * (std_3 / math.sqrt(len(disp_device_3)))
+
+print(f"Error margin 1: {error_margin_1}")
+print(f"Error margin 2: {error_margin_2}")
+print(f"Error margin 3: {error_margin_3}")
